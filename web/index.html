@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSV Viewer</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="toolbar">
+      <div class="toolbar-group">
+        <button id="openBtn" class="button button-primary">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3.75 18.25V7.75A1.75 1.75 0 0 1 5.5 6h4.1l1.6 2h7.3a1.75 1.75 0 0 1 1.75 1.75v8.5A1.75 1.75 0 0 1 18.5 20H5.5a1.75 1.75 0 0 1-1.75-1.75Z" />
+              <path d="M3.75 10.25h16.5" />
+            </svg>
+          </span>
+          <span>Open CSV</span>
+        </button>
+
+        <button id="exportBtn" class="button button-secondary" disabled>
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 3.75h7.25L19 8.5v11.75A1.75 1.75 0 0 1 17.25 22H7A1.75 1.75 0 0 1 5.25 20.25V5.5A1.75 1.75 0 0 1 7 3.75Z" />
+              <path d="M14.25 3.75V8.5H19" />
+              <path d="M12 11v6" />
+              <path d="m9.5 14.5 2.5 2.5 2.5-2.5" />
+            </svg>
+          </span>
+          <span>Export XLSX</span>
+        </button>
+
+        <button id="copyBtn" class="button button-secondary" disabled>
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <rect x="8" y="6.25" width="11" height="13" rx="1.75" />
+              <path d="M15.25 6.25V5.5A1.75 1.75 0 0 0 13.5 3.75h-7A1.75 1.75 0 0 0 4.75 5.5v10A1.75 1.75 0 0 0 6.5 17.25H8" />
+            </svg>
+          </span>
+          <span>Copy Table</span>
+        </button>
+      </div>
+
+      <div class="toolbar-group toolbar-grow">
+        <label class="field field-search">
+          <span class="field-label">Search</span>
+          <input id="searchInput" type="search" placeholder="Search all columns" />
+        </label>
+
+        <label class="field field-row">
+          <span class="field-label">Row</span>
+          <div class="field-inline">
+            <input id="rowInput" type="number" min="1" step="1" placeholder="Jump to row" />
+            <button id="jumpBtn" class="button button-secondary button-compact">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 12h11" />
+                  <path d="m12.5 7.5 4.5 4.5-4.5 4.5" />
+                </svg>
+              </span>
+              <span>Go</span>
+            </button>
+          </div>
+        </label>
+      </div>
+    </header>
+
+    <section class="meta-bar">
+      <div class="meta-group">
+        <span id="rowCount" class="meta-item">0 rows</span>
+        <span id="columnCount" class="meta-item">0 columns</span>
+        <span id="delimiterInfo" class="meta-item">Delimiter: -</span>
+        <span id="viewInfo" class="meta-item">Rows 0-0</span>
+      </div>
+      <span id="fileInfo" class="meta-file">No file loaded</span>
+    </section>
+
+    <section class="table-panel">
+      <section id="tableWrap" class="table-wrap">
+        <div class="empty-state">
+          <p class="empty-title">No dataset loaded</p>
+          <p class="empty-copy">Load a CSV via button or drag and drop.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

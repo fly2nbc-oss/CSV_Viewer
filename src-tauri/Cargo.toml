@@ -1,0 +1,33 @@
+[package]
+name = "csv_viewer"
+version = "1.0.0"
+description = "Slim CSV viewer with XLSX export"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "csv_viewer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+csv = "1"
+umya-spreadsheet = "2"
+encoding_rs = "0.8"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
