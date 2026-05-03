@@ -49,7 +49,13 @@ Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) liegen nach
 
 ### Arch Linux / Manjaro (pacman)
 
-Es gibt **kein** natives `.pkg.tar.zst` im Tauri-CLI; für Arch und Derivate ([Manjaro](https://manjaro.org/)) liegt im Repository ein **PKGBUILD**, das die App aus dem Quelltarball **(Git-Tag `v<Version>`)** baut und Binary, `.desktop`-Datei und Icons installiert.
+**Vorgefertigtes Paket:** Bei [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) (nach Tag `v*`) gibt es eine Datei **`csv-viewer-*-x86_64.pkg.tar.zst`** – direkt ohne ZIP als Release-Asset. Install:
+
+```bash
+sudo pacman -U ./csv-viewer-*-x86_64.pkg.tar.zst
+```
+
+**Selbst bauen:** Im Repository liegen `packaging/manjaro/PKGBUILD` (Tarball von GitHub) und `PKGBUILD.ci` (für CI/lokale Kopie). Vorgehen wie zuvor:
 
 1. [Build-Paket für pacman](https://wiki.archlinux.org/title/PKGBUILD) installieren, z. B. auf Manjaro:
 
@@ -115,6 +121,13 @@ Voraussetzungen: **Node.js** (empfohlen aktuelle LTS oder neuer), **Rust (stable
 
 Generierte Verzeichnisse wie `node_modules` und `src-tauri/target` können bei Bedarf gelöscht und durch erneutes `npm install` bzw. Build wiederhergestellt werden.
 
+### Release-Binaries und GitHub Actions
+
+- **Releases (Versionstag `v*`):** Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) liegen **einzelne Dateien** (`.deb`, `.exe`, `.dmg`, `.pkg.tar.zst`) zum direkten Download **ohne ZIP** (jeweils ein Asset = eine Datei).
+- **Actions (CI):** Workflow-Artefakte werden von GitHub **weiterhin als ZIP** zum Download angeboten (Plattformlimit). Pro Artefakt liegt darin nur **eine** Installationsdatei (maximale Komprimierung aus, schnelleres Entpacken). Für direkte Links die **Release-Assets** nutzen.
+
+**Binärgröße:** Im [Release-Profil](src-tauri/Cargo.toml) ist `opt-level = "z"` (kleinere Rust-Binary) sowie `lto`, `strip` und `panic = "abort"` gesetzt; der Großteil der App-Größe entfällt weiterhin auf **WebView2** bzw. **WebKit-GTK**.
+
 ---
 
 ## 🏗 Projektstruktur
@@ -123,7 +136,7 @@ Generierte Verzeichnisse wie `node_modules` und `src-tauri/target` können bei B
 - **`src-tauri/`** – Rust-Backend, Tauri-Konfiguration, Icons.
   - **`lib.rs`** – Tauri-Setup, Kommandos wie `read_csv`, `export_xlsx`, Drag-and-Drop-Event `csv-dropped`.
   - **`main.rs`** – nativer Einstiegspunkt.
-- **`packaging/manjaro/`** – **PKGBUILD**, Desktop-Datei und `.install`-Skript für **Arch Linux / Manjaro**.
+- **`packaging/manjaro/`** – **PKGBUILD** (Release-Tarball), **PKGBUILD.ci** (CI/lokale Kopie), Desktop- und Install-Skripte für **Arch Linux / Manjaro**.
 
 Ausführliche technische Beschreibung: siehe **`CSV_Viewer_Doc.md`** im Repository.
 

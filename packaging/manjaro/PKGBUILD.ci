@@ -1,0 +1,48 @@
+# Nur für CI (makepkg): baut aus einer Kopie des Repos (kein GitHub-Tarball).
+# @PKGVER@ und @REPO_ROOT@ werden vom Workflow per sed ersetzt.
+
+pkgname=csv-viewer
+pkgver=@PKGVER@
+pkgrel=1
+pkgdesc="Schlanker Desktop-CSV-Viewer mit Suche und XLSX-Export (Tauri)"
+arch=('x86_64')
+url="https://github.com/fly2nbc-oss/CSV_Viewer"
+license=('Apache')
+depends=(
+  'webkit2gtk-4.1'
+  'gtk3'
+  'libayatana-appindicator'
+  'cairo'
+  'gdk-pixbuf2'
+  'glib2'
+  'hicolor-icon-theme'
+  'libsoup3'
+  'gcc-libs'
+  'glibc'
+)
+makedepends=('npm' 'rust' 'cargo' 'git' 'pkgconf')
+install="csv-viewer.install"
+options=(!debug)
+source=('ci-dummy')
+sha256sums=('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+
+prepare() {
+  mkdir -p "${srcdir}/ws"
+  cp -a "@REPO_ROOT@/." "${srcdir}/ws/"
+}
+
+build() {
+  cd "${srcdir}/ws"
+  npm ci
+  npm run tauri build -- --no-bundle
+}
+
+package() {
+  cd "${srcdir}/ws"
+  install -Dm755 "src-tauri/target/release/csv_viewer" "${pkgdir}/usr/bin/csv-viewer"
+  install -Dm644 "${srcdir}/ws/packaging/manjaro/csv-viewer.desktop" "${pkgdir}/usr/share/applications/csv-viewer.desktop"
+  install -Dm644 "src-tauri/icons/32x32.png" "${pkgdir}/usr/share/icons/hicolor/32x32/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/64x64.png" "${pkgdir}/usr/share/icons/hicolor/64x64/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/128x128.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/128x128@2x.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/csv-viewer.png"
+}

@@ -71,11 +71,64 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "CSV Viewer ${{ github.ref_name }}"
           releaseBody: |
-            Installierbare Builds für Windows (NSIS), Linux (.deb), macOS (.dmg).
+            **Direkte Downloads (ohne ZIP):** Jede Datei unten einzeln herunterladen (Links „Latest“ / Assets).
 
-            **Arch Linux / Manjaro:** Paket über `packaging/manjaro/` bauen (`makepkg -si`), siehe README.
+            | Plattform | Datei |
+            |-----------|--------|
+            | Windows | `.exe` (NSIS) |
+            | Debian/Ubuntu | `.deb` |
+            | macOS | `.dmg` |
+            | Arch Linux / Manjaro | `.pkg.tar.zst` (pacman) |
 
-            **Hinweis:** Die Versionsnummer in `src-tauri/tauri.conf.json` sollte mit diesem Tag übereinstimmen.
+            **Manjaro / Arch:** `sudo pacman -U ./csv-viewer-*-x86_64.pkg.tar.zst`
+
+            **Hinweis:** Version in `src-tauri/tauri.conf.json` sollte mit dem Git-Tag übereinstimmen.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+  publish-arch:
+    name: Release — Arch Linux / Manjaro
+    needs: publish
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Prepare pacman (container)
+        run: |
+          pacman -Sy --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm --needed base-devel sudo nodejs npm git rust jq github-cli
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: makepkg (.pkg.tar.zst)
+        run: |
+          useradd -m -d /home/builder builder
+          ver=$(jq -r .version "$GITHUB_WORKSPACE/src-tauri/tauri.conf.json")
+          mkdir -p /home/builder/pkg
+          sed -e "s|@PKGVER@|${ver}|g" -e "s|@REPO_ROOT@|${GITHUB_WORKSPACE}|g" \
+            "$GITHUB_WORKSPACE/packaging/manjaro/PKGBUILD.ci" > /home/builder/pkg/PKGBUILD
+          cp "$GITHUB_WORKSPACE/packaging/manjaro/csv-viewer.install" /home/builder/pkg/
+          cp "$GITHUB_WORKSPACE/packaging/manjaro/ci-dummy" /home/builder/pkg/
+          chown -R builder:builder /home/builder/pkg
+          sudo -u builder bash -c 'cd /home/builder/pkg && makepkg -sf --noconfirm'
+          shopt -s nullglob
+          f=(/home/builder/pkg/*.pkg.tar.zst)
+          cp "${f[0]}" "$GITHUB_WORKSPACE/"
+
+      - name: Upload .pkg.tar.zst to Release (direkter Asset-Link)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          shopt -s nullglob
+          cd "$GITHUB_WORKSPACE"
+          f=(*.pkg.tar.zst)
+          pkg="${f[0]}"
+          gh config set prompt disabled
+          gh release upload "${{ github.ref_name }}" \
+            "$pkg" \
+            --clobber --repo "${{ github.repository }}"

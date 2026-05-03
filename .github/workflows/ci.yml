@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Hinweis: GitHub packt Workflow-Artefakte immer als ZIP (pro Artefakt); im ZIP liegt
+# jeweils genau eine Installationsdatei (.deb / .exe / .dmg / .pkg.tar.zst).
+# Direkte Dateilinks ohne ZIP: siehe GitHub Releases unter einem Versionstag (v*).
+
 jobs:
   build:
     permissions:
@@ -72,10 +76,73 @@ jobs:
       - name: Build (Tauri)
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
 
-      - name: Upload installer artifacts
+      - name: Upload Linux (.deb) — ein Artefakt = ein Installer (im ZIP)
+        if: matrix.id == 'linux'
         uses: actions/upload-artifact@v4
         with:
-          name: csv-viewer-${{ matrix.id }}
-          path: src-tauri/target/release/bundle/
+          name: csv-viewer_linux_amd64.deb
+          path: src-tauri/target/release/bundle/deb/*.deb
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Windows (.exe) — ein Artefakt = ein Installer (im ZIP)
+        if: matrix.id == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: csv-viewer_windows_x64-setup.exe
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload macOS (.dmg) — ein Artefakt = ein Installer (im ZIP)
+        if: matrix.id == 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: csv-viewer_macos.dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+
+  archlinux-pkg:
+    name: Arch Linux / Manjaro (pacman)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Prepare pacman (container)
+        run: |
+          pacman -Sy --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm --needed base-devel sudo nodejs npm git rust jq
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: makepkg (.pkg.tar.zst)
+        run: |
+          useradd -m -d /home/builder builder
+          ver=$(jq -r .version "$GITHUB_WORKSPACE/src-tauri/tauri.conf.json")
+          mkdir -p /home/builder/pkg
+          sed -e "s|@PKGVER@|${ver}|g" -e "s|@REPO_ROOT@|${GITHUB_WORKSPACE}|g" \
+            "$GITHUB_WORKSPACE/packaging/manjaro/PKGBUILD.ci" > /home/builder/pkg/PKGBUILD
+          cp "$GITHUB_WORKSPACE/packaging/manjaro/csv-viewer.install" /home/builder/pkg/
+          cp "$GITHUB_WORKSPACE/packaging/manjaro/ci-dummy" /home/builder/pkg/
+          chown -R builder:builder /home/builder/pkg
+          sudo -u builder bash -c 'cd /home/builder/pkg && makepkg -sf --noconfirm'
+          shopt -s nullglob
+          f=(/home/builder/pkg/*.pkg.tar.zst)
+          cp "${f[0]}" "$GITHUB_WORKSPACE/csv-viewer_archlinux_x86_64.pkg.tar.zst"
+
+      - name: Upload Arch/Manjaro (.pkg.tar.zst)
+        uses: actions/upload-artifact@v4
+        with:
+          name: csv-viewer_archlinux_x86_64.pkg.tar.zst
+          path: csv-viewer_archlinux_x86_64.pkg.tar.zst
+          compression-level: 0
           if-no-files-found: error
           retention-days: 14
