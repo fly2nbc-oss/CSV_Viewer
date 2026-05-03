@@ -2,6 +2,7 @@
 
 > **Schlanker Desktop-CSV-Viewer mit großen Dateien, Suche und Excel-Export – lokal, schnell, plattformübergreifend.**
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Tauri](https://img.shields.io/badge/Tauri-v2-262626?logo=tauri)
 ![Rust](https://img.shields.io/badge/Rust-stable-orange?logo=rust&logoColor=white)
 
@@ -83,6 +84,12 @@ Generierte Verzeichnisse wie `node_modules` und `src-tauri/target` können bei B
   - **`main.rs`** – nativer Einstiegspunkt.
 
 Ausführliche technische Beschreibung: siehe **`CSV_Viewer_Doc.md`** im Repository.
+
+---
+
+## 📄 Lizenz
+
+Lizenziert unter der **Apache License, Version 2.0**. Den vollständigen Text findest du in der Datei [`LICENSE`](LICENSE).
 
 ---
 

@@ -4,6 +4,7 @@ version = "1.0.0"
 description = "Slim CSV viewer with XLSX export"
 authors = ["you"]
 edition = "2021"
+license = "Apache-2.0"
 
 [lib]
 name = "csv_viewer_lib"
