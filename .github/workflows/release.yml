@@ -16,10 +16,10 @@ jobs:
         include:
           - id: linux
             platform: ubuntu-22.04
-            args: "--bundles deb"
+            args: '--bundles deb,appimage'
           - id: windows
             platform: windows-latest
-            args: "--bundles nsis"
+            args: '--bundles nsis,msi'
           - id: macos
             platform: macos-latest
             args: "--bundles dmg"
@@ -29,6 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: AppImage / linuxdeploy (strip workaround)
+        if: matrix.id == 'linux'
+        run: echo "NO_STRIP=true" >> "$GITHUB_ENV"
 
       - name: Install system dependencies (Linux)
         if: matrix.id == 'linux'
@@ -43,7 +47,8 @@ jobs:
             build-essential \
             curl \
             wget \
-            file
+            file \
+            libfuse2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -71,64 +76,38 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "CSV Viewer ${{ github.ref_name }}"
           releaseBody: |
-            **Direkte Downloads (ohne ZIP):** Jede Datei unten einzeln herunterladen (Links „Latest“ / Assets).
+            **Assets (wie gewohnt einzeln herunterladen):**
 
-            | Plattform | Datei |
-            |-----------|--------|
-            | Windows | `.exe` (NSIS) |
-            | Debian/Ubuntu | `.deb` |
+            | Typ | Beispiel |
+            |-----|----------|
+            | Roh-Binary Linux | `csv-viewer` |
+            | Roh-Binary Windows | `csv-viewer.exe` |
+            | Linux `.deb` | `CSV Viewer_<Version>_amd64.deb` |
+            | Linux AppImage | `CSV Viewer_<Version>_amd64.AppImage` |
+            | Windows Setup (NSIS) | `CSV Viewer_<Version>_x64-setup.exe` |
+            | Windows MSI (WiX) | `CSV Viewer_<Version>_x64_en-US.msi` |
             | macOS | `.dmg` |
-            | Arch Linux / Manjaro | `.pkg.tar.zst` (pacman) |
 
-            **Manjaro / Arch:** `sudo pacman -U ./csv-viewer-*-x86_64.pkg.tar.zst`
-
-            **Hinweis:** Version in `src-tauri/tauri.conf.json` sollte mit dem Git-Tag übereinstimmen.
+            **Hinweis:** Version in `src-tauri/tauri.conf.json` und Cargo sollen mit dem Git-Tag übereinstimmen.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+          updaterJsonPreferNsis: true
 
-  publish-arch:
-    name: Release — Arch Linux / Manjaro
-    needs: publish
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Prepare pacman (container)
-        run: |
-          pacman -Sy --noconfirm archlinux-keyring
-          pacman -Syu --noconfirm --needed base-devel sudo nodejs npm git rust jq github-cli
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: makepkg (.pkg.tar.zst)
-        run: |
-          useradd -m -d /home/builder builder
-          ver=$(jq -r .version "$GITHUB_WORKSPACE/src-tauri/tauri.conf.json")
-          mkdir -p /home/builder/pkg
-          sed -e "s|@PKGVER@|${ver}|g" -e "s|@REPO_ROOT@|${GITHUB_WORKSPACE}|g" \
-            "$GITHUB_WORKSPACE/packaging/manjaro/PKGBUILD.ci" > /home/builder/pkg/PKGBUILD
-          cp "$GITHUB_WORKSPACE/packaging/manjaro/csv-viewer.install" /home/builder/pkg/
-          cp "$GITHUB_WORKSPACE/packaging/manjaro/ci-dummy" /home/builder/pkg/
-          chown -R builder:builder /home/builder/pkg
-          sudo -u builder bash -c 'cd /home/builder/pkg && makepkg -sf --noconfirm'
-          shopt -s nullglob
-          f=(/home/builder/pkg/*.pkg.tar.zst)
-          cp "${f[0]}" "$GITHUB_WORKSPACE/"
-
-      - name: Upload .pkg.tar.zst to Release (direkter Asset-Link)
+      - name: Upload portable binary as csv-viewer (Linux)
+        if: matrix.id == 'linux'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          shopt -s nullglob
-          cd "$GITHUB_WORKSPACE"
-          f=(*.pkg.tar.zst)
-          pkg="${f[0]}"
-          gh config set prompt disabled
-          gh release upload "${{ github.ref_name }}" \
-            "$pkg" \
-            --clobber --repo "${{ github.repository }}"
+          cp src-tauri/target/release/csv_viewer csv-viewer
+          chmod +x csv-viewer
+          gh release upload "${{ github.ref_name }}" csv-viewer --clobber --repo "${{ github.repository }}"
+
+      - name: Upload portable binary as csv-viewer.exe (Windows)
+        if: matrix.id == 'windows'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          Copy-Item "src-tauri/target/release/csv_viewer.exe" -Destination "csv-viewer.exe"
+          gh release upload "${{ github.ref_name }}" "csv-viewer.exe" --clobber --repo "${{ github.repository }}"

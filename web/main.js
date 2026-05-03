@@ -1,5 +1,5 @@
 const EMPTY_TITLE = "No dataset loaded";
-const EMPTY_TEXT = "Load a CSV via button or drag and drop.";
+const EMPTY_TEXT = "Load a CSV, TXT or XLSX via button or drag and drop.";
 const NO_MATCHES_TITLE = "No matching rows";
 const NO_MATCHES_TEXT = "No rows match the current search.";
 const NO_DATA_TITLE = "File loaded without rows";
@@ -35,8 +35,19 @@ const ui = {
   delimiterInfo: $("delimiterInfo"),
   tableWrap: $("tableWrap"),
   viewInfo: $("viewInfo"),
+  sheetSelectorContainer: $("sheetSelectorContainer"),
+  sheetSelector: $("sheetSelector"),
+  statsBar: $("statsBar"),
+  statsName: $("statsName"),
+  statsSum: $("statsSum"),
+  statsMin: $("statsMin"),
+  statsMax: $("statsMax"),
+  statsAvg: $("statsAvg"),
   themeToggle: $("themeToggle"),
   aboutBtn: $("aboutBtn"),
+  aboutModal: $("aboutModal"),
+  aboutOkBtn: $("aboutOkBtn"),
+  aboutModalVersion: $("aboutModalVersion"),
 };
 
 const state = {
@@ -50,7 +61,16 @@ const state = {
   headerHeight: DEFAULT_HEADER_HEIGHT,
   columnWidths: [],
   totalWidth: 0,
+  statsColumnIndex: -1,
+  sheets: [],
+  currentSheet: "",
 };
+
+let sheetSelectProgrammatic = false;
+
+const statsNumberFmt = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
+
+let headerStatsClickTimer = 0;
 
 let renderQueued = false;
 let measurementFrame = 0;
@@ -75,6 +95,60 @@ function getColumns() {
     { length: totalColumns() },
     (_, index) => state.headers[index] ?? `Column ${index + 1}`
   );
+}
+
+function isXlsxPath(path) {
+  return typeof path === "string" && /\.xlsx$/i.test(path);
+}
+
+function updateSheetSelector() {
+  const wrap = ui.sheetSelectorContainer;
+  const sel = ui.sheetSelector;
+  if (!wrap || !sel) return;
+  if (!state.sheets.length) {
+    wrap.hidden = true;
+    sel.replaceChildren();
+    return;
+  }
+  wrap.hidden = false;
+  sheetSelectProgrammatic = true;
+  try {
+    sel.replaceChildren();
+    for (const name of state.sheets) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+    if (state.currentSheet && state.sheets.includes(state.currentSheet)) {
+      sel.value = state.currentSheet;
+    }
+  } finally {
+    sheetSelectProgrammatic = false;
+  }
+}
+
+function insertColumnNameIntoSearch(columnIndex) {
+  const columns = getColumns();
+  const name = columns[columnIndex];
+  if (name === undefined) return;
+  const token = String(name);
+  const input = ui.searchInput;
+  let v = input.value;
+  if (!v.trim()) {
+    input.value = `${token} `;
+  } else if (/\s$/.test(v)) {
+    input.value = `${v}${token} `;
+  } else {
+    input.value = `${v} ${token} `;
+  }
+  state.searchQuery = input.value;
+  applyFilter();
+  ui.tableWrap.scrollTop = 0;
+  queueRender();
+  input.focus();
+  const end = input.value.length;
+  input.setSelectionRange(end, end);
 }
 
 function setInfo(text, isError = false) {
@@ -143,25 +217,21 @@ function toggleTheme() {
 
 const APP_VERSION = "1.0.0";
 
-async function showAbout() {
-  const body = [
-    `Version ${APP_VERSION}`,
-    "",
-    "Öffnen und durchsuchen von CSV/TXT, Export nach XLSX.",
-    "",
-    "Lizenz: Apache-2.0",
-    "https://github.com/fly2nbc-oss/CSV_Viewer",
-  ].join("\n");
-
-  if (tauri.core?.invoke) {
-    await tauri.core.invoke("plugin:dialog|message", {
-      message: body,
-      title: "Über CSV Viewer",
-      kind: "info",
-    });
-  } else {
-    window.alert(`CSV Viewer\n\n${body}`);
+function openAbout() {
+  if (ui.aboutModalVersion) {
+    ui.aboutModalVersion.textContent = APP_VERSION;
   }
+  if (ui.aboutModal) {
+    ui.aboutModal.hidden = false;
+  }
+  ui.aboutOkBtn?.focus();
+}
+
+function closeAbout() {
+  if (ui.aboutModal) {
+    ui.aboutModal.hidden = true;
+  }
+  ui.aboutBtn?.focus();
 }
 
 function displayDelimiter(delimiter) {
@@ -273,7 +343,9 @@ function updateMeta() {
     ? `${visibleRows().length}/${state.rows.length} rows`
     : `${state.rows.length} rows`;
   ui.columnCount.textContent = `${totalColumns()} columns`;
-  ui.delimiterInfo.textContent = `Delimiter: ${displayDelimiter(state.delimiter)}`;
+  ui.delimiterInfo.textContent = state.sheets.length
+    ? "Format: XLSX"
+    : `Delimiter: ${displayDelimiter(state.delimiter)}`;
   ui.viewInfo.textContent = visibleRows().length
     ? `Rows ${range.displayStart}-${range.displayEnd}`
     : "Rows 0-0";
@@ -283,6 +355,47 @@ function updateMeta() {
   ui.jumpBtn.disabled = !visibleRows().length;
   ui.searchInput.disabled = !hasDataset();
   setInfo(state.filePath || "No file loaded");
+  renderStats();
+}
+
+function renderStats() {
+  const bar = ui.statsBar;
+  if (!bar) return;
+  const tc = totalColumns();
+  if (state.statsColumnIndex < 0 || state.statsColumnIndex >= tc) {
+    bar.hidden = true;
+    return;
+  }
+  const stats = computeColumnStats(state.statsColumnIndex);
+  if (!stats) {
+    state.statsColumnIndex = -1;
+    bar.hidden = true;
+    queueRender();
+    return;
+  }
+  const colName = getColumns()[state.statsColumnIndex];
+  ui.statsName.textContent = `Spalte: ${colName}`;
+  ui.statsSum.textContent = `Sum: ${statsNumberFmt.format(stats.sum)}`;
+  ui.statsMin.textContent = `Min: ${statsNumberFmt.format(stats.min)}`;
+  ui.statsMax.textContent = `Max: ${statsNumberFmt.format(stats.max)}`;
+  ui.statsAvg.textContent = `Avg: ${statsNumberFmt.format(stats.avg)} (n=${stats.n})`;
+  bar.hidden = false;
+}
+
+function handleHeaderStatsClick(columnIndex) {
+  if (!Number.isFinite(columnIndex) || columnIndex < 0) return;
+  if (state.statsColumnIndex === columnIndex) {
+    state.statsColumnIndex = -1;
+  } else {
+    const stats = computeColumnStats(columnIndex);
+    if (!stats) {
+      state.statsColumnIndex = -1;
+    } else {
+      state.statsColumnIndex = columnIndex;
+    }
+  }
+  renderStats();
+  queueRender();
 }
 
 function parseNumericSearch(raw) {
@@ -326,6 +439,25 @@ function cellToComparableNumber(cell) {
   text = text.replace(",", ".");
   const num = parseFloat(text);
   return Number.isFinite(num) ? num : Number.NaN;
+}
+
+function computeColumnStats(colIndex) {
+  let sum = 0;
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  let n = 0;
+  for (const row of visibleRows()) {
+    const v = cellToComparableNumber(row[colIndex]);
+    if (Number.isNaN(v)) continue;
+    sum += v;
+    if (v < min) min = v;
+    if (v > max) max = v;
+    n += 1;
+  }
+  if (!n) {
+    return null;
+  }
+  return { n, sum, min, max, avg: sum / n };
 }
 
 function compareByOperator(num, operator, value) {
@@ -460,7 +592,14 @@ function renderTable() {
   const range = currentViewportRange();
   const template = gridTemplate();
   const head = columns
-    .map((value) => `<div class="virtual-cell virtual-head-cell">${escapeHtml(value)}</div>`)
+    .map(
+      (value, index) =>
+        `<div class="virtual-cell virtual-head-cell${
+          index === state.statsColumnIndex ? " is-stats-active" : ""
+        }" data-column-index="${index}" role="columnheader" title="${escapeHtml(
+          "Einfachklick: numerische Statistiken. Doppelklick: Spaltenname in die Suche einfügen"
+        )}">${escapeHtml(value)}</div>`
+    )
     .join("");
   const body = visibleRows()
     .slice(range.start, range.end)
@@ -487,27 +626,55 @@ function renderTable() {
   }
 }
 
-async function loadCsvFromPath(path) {
+async function loadFileFromPath(path, sheetName = null) {
   if (!tauri.core?.invoke) {
     throw new Error("Tauri API not available");
   }
 
-  const payload = await tauri.core.invoke("read_csv", { path });
-  Object.assign(state, {
-    filePath: path,
-    headers: payload.headers || [],
-    rows: payload.rows || [],
-    filteredRows: payload.rows || [],
-    delimiter: payload.delimiter || "-",
-    searchQuery: "",
-    rowHeight: DEFAULT_ROW_HEIGHT,
-    headerHeight: DEFAULT_HEADER_HEIGHT,
-    columnWidths: [],
-    totalWidth: 0,
-  });
+  const isXlsx = isXlsxPath(path);
+  if (isXlsx) {
+    const payload = await tauri.core.invoke("read_xlsx", {
+      path,
+      sheet_name: sheetName ?? null,
+    });
+    Object.assign(state, {
+      filePath: path,
+      headers: payload.headers || [],
+      rows: payload.rows || [],
+      filteredRows: payload.rows || [],
+      delimiter: "-",
+      sheets: payload.sheets || [],
+      currentSheet: payload.current_sheet || "",
+      searchQuery: "",
+      rowHeight: DEFAULT_ROW_HEIGHT,
+      headerHeight: DEFAULT_HEADER_HEIGHT,
+      columnWidths: [],
+      totalWidth: 0,
+      statsColumnIndex: -1,
+    });
+  } else {
+    const payload = await tauri.core.invoke("read_csv", { path });
+    Object.assign(state, {
+      filePath: path,
+      headers: payload.headers || [],
+      rows: payload.rows || [],
+      filteredRows: payload.rows || [],
+      delimiter: payload.delimiter || "-",
+      sheets: [],
+      currentSheet: "",
+      searchQuery: "",
+      rowHeight: DEFAULT_ROW_HEIGHT,
+      headerHeight: DEFAULT_HEADER_HEIGHT,
+      columnWidths: [],
+      totalWidth: 0,
+      statsColumnIndex: -1,
+    });
+  }
+
   ui.searchInput.value = "";
   ui.rowInput.value = "";
   ui.tableWrap.scrollTop = 0;
+  updateSheetSelector();
   renderTable();
 }
 
@@ -518,11 +685,11 @@ async function openCsv() {
 
   const path = await tauri.dialog.open({
     multiple: false,
-    filters: [{ name: "CSV", extensions: ["csv", "txt"] }],
+    filters: [{ name: "CSV / Excel", extensions: ["csv", "txt", "xlsx"] }],
   });
 
   if (path && !Array.isArray(path)) {
-    await loadCsvFromPath(path);
+    await loadFileFromPath(path);
   }
 }
 
@@ -551,7 +718,10 @@ async function exportXlsx() {
       headers: state.headers,
       rows: state.rows,
       output_path: outputPath,
-      sheet_name: "CSV Export",
+      sheet_name:
+        state.sheets.length > 0 && state.currentSheet
+          ? state.currentSheet
+          : "CSV Export",
     },
   });
 
@@ -631,7 +801,7 @@ function handleDropPath(path) {
     return;
   }
 
-  run(() => loadCsvFromPath(path));
+  run(() => loadFileFromPath(path));
 }
 
 function setupDragAndDrop() {
@@ -657,7 +827,7 @@ function setupDragAndDrop() {
 async function loadStartupPath() {
   const startupPath = await tauri.core?.invoke?.("startup_csv_path");
   if (startupPath) {
-    await loadCsvFromPath(startupPath);
+    await loadFileFromPath(startupPath);
   }
 }
 
@@ -672,7 +842,20 @@ function isEditableTarget(target) {
 
 initTheme();
 ui.themeToggle?.addEventListener("click", toggleTheme);
-ui.aboutBtn?.addEventListener("click", () => run(showAbout, "About error"));
+ui.aboutBtn?.addEventListener("click", openAbout);
+
+ui.aboutModal?.addEventListener("click", (event) => {
+  if (event.target?.closest?.("[data-close-modal]")) {
+    closeAbout();
+  }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!ui.aboutModal || ui.aboutModal.hidden) return;
+  event.preventDefault();
+  closeAbout();
+});
 
 ui.openBtn.addEventListener("click", () => run(openCsv));
 ui.exportBtn.addEventListener("click", () => run(exportXlsx, "Export error"));
@@ -684,6 +867,13 @@ ui.searchInput.addEventListener("input", () => {
   ui.tableWrap.scrollTop = 0;
   queueRender();
 });
+ui.sheetSelector?.addEventListener("change", (event) => {
+  if (sheetSelectProgrammatic) return;
+  const name = event.target.value;
+  if (state.filePath && name) {
+    run(() => loadFileFromPath(state.filePath, name), "Sheet error");
+  }
+});
 ui.rowInput.addEventListener("keydown", ({ key }) => {
   if (key === "Enter") {
     jumpToRow();
@@ -693,6 +883,28 @@ ui.tableWrap.addEventListener("scroll", () => {
   if (state.rows.length) {
     queueRender();
   }
+});
+ui.tableWrap.addEventListener("click", (event) => {
+  const cell = event.target.closest(".virtual-head-cell");
+  if (!cell) return;
+  if (event.detail === 2) {
+    return;
+  }
+  window.clearTimeout(headerStatsClickTimer);
+  headerStatsClickTimer = window.setTimeout(() => {
+    headerStatsClickTimer = 0;
+    const idx = Number.parseInt(cell.dataset.columnIndex ?? "", 10);
+    handleHeaderStatsClick(idx);
+  }, 250);
+});
+ui.tableWrap.addEventListener("dblclick", (event) => {
+  const cell = event.target.closest(".virtual-head-cell");
+  if (!cell) return;
+  window.clearTimeout(headerStatsClickTimer);
+  headerStatsClickTimer = 0;
+  const idx = Number.parseInt(cell.dataset.columnIndex ?? "", 10);
+  if (!Number.isFinite(idx) || idx < 0) return;
+  insertColumnNameIntoSearch(idx);
 });
 window.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c") {

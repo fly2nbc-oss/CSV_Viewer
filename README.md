@@ -15,10 +15,13 @@
 - **Dateien öffnen:** CSV und TXT per Dialog oder **Drag & Drop** auf das Fenster.
 - **Intelligente Trennzeichen:** Erkennung gängiger Delimiter (Komma, Semikolon, Tab usw.) beim Einlesen im Backend.
 - **Große Datenmengen:** **Virtualisierte** Tabellenansicht – nur sichtbare Zeilen werden ins DOM gerendert.
-- **Suche & Navigation:** Filter über alle Spalten; **direkter Sprung** zu einer Zeilennummer.
+- **Suche & Filter:** Volltext über alle Spalten; **numerische Filter** mit Spaltenname und Operatoren (`>`, `<`, `>=`, `<=`, `=`).
+- **Spaltenkopf:** **Einfachklick** zeigt für **numerische** Spalten **Summe, Min, Max, Mittelwert** und Stichprobenumfang **n** (bezogen auf die **aktuell gefilterten** Zeilen). **Doppelklick** fügt den Spaltennamen in das Suchfeld ein.
+- **Navigation:** Direkter **Sprung** zu einer Zeilennummer.
 - **Export:** Speichern der aktuellen Ansicht als **Excel (.xlsx)**.
 - **Zwischenablage:** Tabelle in die Zwischenablage kopieren (z. B. für schnelles Einfügen woanders).
-- **Statusleiste:** Anzeige von Bereich, Zeilen-/Spaltenzahl, erkanntem Delimiter und Dateipfad.
+- **Darstellung:** **Hell- und Dunkelmodus**, **About**-Dialog im App-Stil (kein natives OS-Modal).
+- **Statusleiste:** Zeilen-/Spaltenzahl, sichtbarer Zeilenbereich, Delimiter, Dateipfad.
 
 ---
 
@@ -35,48 +38,34 @@
 
 ### Windows
 
-Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) liegen nach einem Versionstag (`v*`) Installer (**NSIS**), sofern der Release-Workflow gelaufen ist. Alternativ: siehe **Entwicklung & Build** und `npm run tauri build`.
+Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) (nach einem Versions-Tag `v*`) stehen u. a. **NSIS-Setup** (`.exe`), **MSI** und optional die portable Datei **`csv-viewer.exe`**. Alternativ: siehe **Entwicklung & Build** und `npm run tauri build`.
 
 ### Linux (Debian, Ubuntu, Linux Mint, …)
 
-- **.deb** aus dem [Release](https://github.com/fly2nbc-oss/CSV_Viewer/releases) herunterladen und installieren, z. B.:
+- **.deb** aus dem [Release](https://github.com/fly2nbc-oss/CSV_Viewer/releases) installieren, z. B.:
 
   ```bash
   sudo apt install ./CSV\ Viewer_*_amd64.deb
   ```
 
+- Optional: **AppImage** (`CSV Viewer_<Version>_amd64.AppImage`) oder portable **`csv-viewer`**, falls als Asset vorhanden (je nach erfolgreichem Build).
 - Voraussetzungen entsprechen den üblichen [Tauri-Linux-Abhängigkeiten](https://v2.tauri.app/start/prerequisites/) (u. a. WebKit-GTK); für `.deb`-Pakete sind Abhängigkeiten in der Regel deklariert.
 
 ### Arch Linux / Manjaro (pacman)
 
-**Vorgefertigtes Paket:** Bei [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) (nach Tag `v*`) gibt es eine Datei **`csv-viewer-*-x86_64.pkg.tar.zst`** – direkt ohne ZIP als Release-Asset. Install:
+Es gibt **kein** von GitHub Actions vorgefertigtes **`.pkg.tar.zst`** mehr im Release-Workflow. Du kannst das Paket **lokal** aus dem Repository bauen:
 
-```bash
-sudo pacman -U ./csv-viewer-*-x86_64.pkg.tar.zst
-```
-
-**Selbst bauen:** Im Repository liegen `packaging/manjaro/PKGBUILD` (Tarball von GitHub) und `PKGBUILD.ci` (für CI/lokale Kopie). Vorgehen wie zuvor:
-
-1. [Build-Paket für pacman](https://wiki.archlinux.org/title/PKGBUILD) installieren, z. B. auf Manjaro:
-
-   ```bash
-   sudo pacman -S --needed base-devel git
-   ```
-
-2. Ordner `packaging/manjaro/` aus diesem Repository verwenden (z. B. Repository klonen oder nur diesen Ordner kopieren).
-
-3. **Wichtig:** `pkgver` im `PKGBUILD` muss zu einem existierenden Tag `v1.0.0` passen (siehe `version` in `src-tauri/tauri.conf.json`).
-
-4. Paket bauen und installieren:
+1. [Build-Paket für pacman](https://wiki.archlinux.org/title/PKGBUILD): z. B. auf Manjaro `sudo pacman -S --needed base-devel git`.
+2. Ordner [`packaging/manjaro/`](packaging/manjaro/) verwenden (Repository klonen oder nur diesen Ordner kopieren).
+3. **`pkgver`** im `PKGBUILD` muss zu einem existierenden Tag `v1.0.0` passen (siehe `version` in [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json)).
+4. Bauen und installieren:
 
    ```bash
    cd packaging/manjaro
    makepkg -si
    ```
 
-   `makepkg` lädt den Tarball `v${pkgver}` von GitHub, wird `npm ci` und `tauri build --no-bundle` aus. Das installierte Kommando heißt **`csv-viewer`**.
-
-**Checksum:** Die erste Quelle (`SKIP`) kann nach einem Release mit `updpkgsums` im PKGBUILD-Ordner aktualisiert werden.
+   Das installierte Kommando heißt **`csv-viewer`**.
 
 ### macOS
 
@@ -113,7 +102,7 @@ Voraussetzungen: **Node.js** (empfohlen aktuelle LTS oder neuer), **Rust (stable
    npm run tauri build
    ```
 
-   Unter Linux erzeugt `tauri build` standardmäßig mehrere Bundle-Typen; **AppImage** kann je nach Toolchain fehlschlagen. Für ein **zuverlässiges `.deb`** (u. a. für CI):
+   Unter Linux erzeugt `tauri build` je nach Konfiguration mehrere Bundle-Typen; **AppImage** kann bei fehlender oder problematischer **linuxdeploy**-Toolchain fehlschlagen. Für ein **zuverlässiges `.deb`**:
 
    ```bash
    npm run tauri build -- --bundles deb
@@ -123,8 +112,8 @@ Generierte Verzeichnisse wie `node_modules` und `src-tauri/target` können bei B
 
 ### Release-Binaries und GitHub Actions
 
-- **Releases (Versionstag `v*`):** Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) liegen **einzelne Dateien** (`.deb`, `.exe`, `.dmg`, `.pkg.tar.zst`) zum direkten Download **ohne ZIP** (jeweils ein Asset = eine Datei).
-- **Actions (CI):** Workflow-Artefakte werden von GitHub **weiterhin als ZIP** zum Download angeboten (Plattformlimit). Pro Artefakt liegt darin nur **eine** Installationsdatei (maximale Komprimierung aus, schnelleres Entpacken). Für direkte Links die **Release-Assets** nutzen.
+- **Releases (Versionstag `v*`):** Unter [Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases) liegen die gebauten Assets **einzeln** (ohne zusätzliches ZIP pro Datei), z. B. **`.deb`**, **AppImage** (falls Build durchlief), **Windows Setup / MSI**, **macOS `.dmg`**, sowie optional die portablen **`csv-viewer`** / **`csv-viewer.exe`**.
+- **Actions (CI):** Workflow-Artefakte werden von GitHub **als ZIP** angeboten. Für direkte Dateilinks die **Release-Assets** nutzen.
 
 **Binärgröße:** Im [Release-Profil](src-tauri/Cargo.toml) ist `opt-level = "z"` (kleinere Rust-Binary) sowie `lto`, `strip` und `panic = "abort"` gesetzt; der Großteil der App-Größe entfällt weiterhin auf **WebView2** bzw. **WebKit-GTK**.
 
@@ -136,7 +125,7 @@ Generierte Verzeichnisse wie `node_modules` und `src-tauri/target` können bei B
 - **`src-tauri/`** – Rust-Backend, Tauri-Konfiguration, Icons.
   - **`lib.rs`** – Tauri-Setup, Kommandos wie `read_csv`, `export_xlsx`, Drag-and-Drop-Event `csv-dropped`.
   - **`main.rs`** – nativer Einstiegspunkt.
-- **`packaging/manjaro/`** – **PKGBUILD** (Release-Tarball), **PKGBUILD.ci** (CI/lokale Kopie), Desktop- und Install-Skripte für **Arch Linux / Manjaro**.
+- **`packaging/manjaro/`** – **PKGBUILD** und Hilfsdateien zum **lokalen** Bau eines **pacman**-Pakets (nicht mehr Teil der GitHub-Release-Pipeline).
 
 Ausführliche technische Beschreibung: siehe **`CSV_Viewer_Doc.md`** im Repository.
 

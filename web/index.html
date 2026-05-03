@@ -17,7 +17,7 @@
               <path d="M3.75 10.25h16.5" />
             </svg>
           </span>
-          <span>Open CSV</span>
+          <span>Open</span>
         </button>
 
         <button id="exportBtn" class="button button-secondary" disabled>
@@ -111,6 +111,16 @@
         <span id="columnCount" class="meta-item">0 columns</span>
         <span id="delimiterInfo" class="meta-item">Delimiter: -</span>
         <span id="viewInfo" class="meta-item">Rows 0-0</span>
+        <span id="sheetSelectorContainer" class="meta-item" hidden>
+          <select id="sheetSelector" class="sheet-select" aria-label="Arbeitsblatt auswählen"></select>
+        </span>
+        <span id="statsBar" class="meta-stats" hidden>
+          <span class="meta-item meta-stats-name" id="statsName"></span>
+          <span class="meta-item" id="statsSum"></span>
+          <span class="meta-item" id="statsMin"></span>
+          <span class="meta-item" id="statsMax"></span>
+          <span class="meta-item" id="statsAvg"></span>
+        </span>
       </div>
       <span id="fileInfo" class="meta-file">No file loaded</span>
     </section>
@@ -125,11 +135,39 @@
             </svg>
           </span>
           <p class="empty-title">No dataset loaded</p>
-          <p class="empty-copy">Load a CSV via button or drag and drop.</p>
+          <p class="empty-copy">Load a CSV, TXT or XLSX via button or drag and drop.</p>
         </div>
       </section>
     </section>
   </main>
+
+  <div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden>
+    <div class="modal-backdrop" data-close-modal tabindex="-1" aria-hidden="true"></div>
+    <div class="modal-card" role="document">
+      <header class="modal-head">
+        <h2 class="modal-title" id="aboutTitle">Über CSV Viewer</h2>
+        <button type="button" class="icon-btn modal-close-btn" data-close-modal aria-label="Schließen">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-version">
+          Version <strong id="aboutModalVersion">1.0.0</strong>
+        </p>
+        <p>Öffnen und durchsuchen von CSV/TXT, Export nach XLSX.</p>
+        <p>Lizenz: Apache-2.0</p>
+        <p>
+          <a href="https://github.com/fly2nbc-oss/CSV_Viewer" target="_blank" rel="noopener noreferrer"
+            >github.com/fly2nbc-oss/CSV_Viewer</a>
+        </p>
+      </div>
+      <footer class="modal-foot">
+        <button type="button" class="button button-primary" id="aboutOkBtn" data-close-modal>OK</button>
+      </footer>
+    </div>
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>

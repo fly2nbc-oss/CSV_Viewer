@@ -1,3 +1,4 @@
+use calamine::{open_workbook, Data, Reader, Xlsx};
 use csv::StringRecord;
 use encoding_rs::{UTF_16BE, UTF_16LE, WINDOWS_1252};
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,14 @@ struct CsvData {
     headers: Vec<String>,
     rows: Vec<Vec<String>>,
     delimiter: char,
+}
+
+#[derive(Debug, Serialize)]
+struct XlsxData {
+    sheets: Vec<String>,
+    current_sheet: String,
+    headers: Vec<String>,
+    rows: Vec<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -133,13 +142,76 @@ fn read_csv(path: String) -> Result<CsvData, String> {
     })
 }
 
+fn xlsx_cell_str(value: &Data) -> String {
+    match value {
+        Data::Empty => String::new(),
+        _ => value.to_string(),
+    }
+}
+
+fn normalize_xlsx_row(row: &[Data], min_len: usize) -> Vec<String> {
+    let mut out: Vec<String> = row.iter().map(xlsx_cell_str).collect();
+    if out.len() < min_len {
+        out.resize(min_len, String::new());
+    }
+    out
+}
+
+#[tauri::command]
+fn read_xlsx(path: String, sheet_name: Option<String>) -> Result<XlsxData, String> {
+    let mut workbook: Xlsx<_> =
+        open_workbook(&path).map_err(|e| format!("Could not read XLSX: {e}"))?;
+    let sheets: Vec<String> = workbook.sheet_names().to_vec();
+    if sheets.is_empty() {
+        return Ok(XlsxData {
+            sheets,
+            current_sheet: String::new(),
+            headers: vec![],
+            rows: vec![],
+        });
+    }
+
+    let current_sheet = match &sheet_name {
+        Some(name) if sheets.iter().any(|s| s == name) => name.clone(),
+        _ => sheets[0].clone(),
+    };
+
+    let range = workbook
+        .worksheet_range(&current_sheet)
+        .map_err(|e| format!("Could not read worksheet: {e}"))?;
+
+    let mut row_iter = range.rows();
+    let headers: Vec<String> = if let Some(first) = row_iter.next() {
+        normalize_xlsx_row(first, 0)
+    } else {
+        vec![]
+    };
+
+    let col_count = headers.len();
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    for r in row_iter {
+        rows.push(normalize_xlsx_row(r, col_count));
+    }
+
+    Ok(XlsxData {
+        sheets,
+        current_sheet,
+        headers,
+        rows,
+    })
+}
+
 #[tauri::command]
 fn startup_csv_path() -> Option<String> {
     let arg = std::env::args().nth(1)?;
     let path = Path::new(&arg);
     let ext = path.extension().and_then(|e| e.to_str())?;
 
-    if matches!(ext.to_ascii_lowercase().as_str(), "csv" | "txt") && path.exists() {
+    if matches!(
+        ext.to_ascii_lowercase().as_str(),
+        "csv" | "txt" | "xlsx"
+    ) && path.exists()
+    {
         return Some(arg);
     }
 
@@ -203,6 +275,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             read_csv,
+            read_xlsx,
             startup_csv_path,
             export_xlsx
         ])
