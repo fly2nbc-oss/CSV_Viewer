@@ -44,12 +44,16 @@
       </div>
 
       <div class="toolbar-group toolbar-grow">
-        <label class="field field-search">
+        <label class="field field-search field--inline">
           <span class="field-label">Search</span>
-          <input id="searchInput" type="search" placeholder="Search all columns" />
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search text or e.g. Price &gt; 10, ColumnName &lt;= 5"
+          />
         </label>
 
-        <label class="field field-row">
+        <label class="field field-row field--inline">
           <span class="field-label">Row</span>
           <div class="field-inline">
             <input id="rowInput" type="number" min="1" step="1" placeholder="Jump to row" />
@@ -64,6 +68,40 @@
             </button>
           </div>
         </label>
+      </div>
+
+      <div class="toolbar-end">
+        <button
+          type="button"
+          id="themeToggle"
+          class="icon-btn"
+          title="Darstellung umschalten"
+          aria-label="Hell- oder Dunkelmodus umschalten"
+        >
+          <span class="icon" id="themeIconSun" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+              />
+            </svg>
+          </span>
+          <span class="icon icon-hidden" id="themeIconMoon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </span>
+        </button>
+
+        <button type="button" id="aboutBtn" class="button button-secondary button-compact">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+          </span>
+          <span>About</span>
+        </button>
       </div>
     </header>
 
@@ -80,6 +118,12 @@
     <section class="table-panel">
       <section id="tableWrap" class="table-wrap">
         <div class="empty-state">
+          <span class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4h4M10 9h8M10 13h8M10 17h4" />
+            </svg>
+          </span>
           <p class="empty-title">No dataset loaded</p>
           <p class="empty-copy">Load a CSV via button or drag and drop.</p>
         </div>

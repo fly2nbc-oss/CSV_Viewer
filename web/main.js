@@ -11,6 +11,14 @@ const MIN_COLUMN_WIDTH = 96;
 const MAX_COLUMN_WIDTH = 420;
 const COLUMN_SAMPLE_LIMIT = 300;
 const CELL_HORIZONTAL_PADDING = 20;
+const THEME_KEY = "csv-viewer-theme";
+const EMPTY_ICON_SVG = `
+  <span class="empty-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24">
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4h4M10 9h8M10 13h8M10 17h4" />
+    </svg>
+  </span>`;
 const tauri = window.__TAURI__ ?? {};
 const $ = (id) => document.getElementById(id);
 
@@ -27,6 +35,8 @@ const ui = {
   delimiterInfo: $("delimiterInfo"),
   tableWrap: $("tableWrap"),
   viewInfo: $("viewInfo"),
+  themeToggle: $("themeToggle"),
+  aboutBtn: $("aboutBtn"),
 };
 
 const state = {
@@ -67,14 +77,91 @@ function getColumns() {
   );
 }
 
-function setInfo(text) {
+function setInfo(text, isError = false) {
   ui.fileInfo.textContent = text;
+  ui.fileInfo.classList.toggle("meta-file--error", isError);
 }
 
 function run(task, prefix = "Error") {
   task().catch((error) => {
-    setInfo(`${prefix}: ${String(error)}`);
+    setInfo(`${prefix}: ${String(error)}`, true);
   });
+}
+
+function getStoredTheme() {
+  const value = localStorage.getItem(THEME_KEY);
+  if (value === "light" || value === "dark") {
+    return value;
+  }
+  return null;
+}
+
+function systemPrefersDark() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function effectiveTheme() {
+  const stored = getStoredTheme();
+  if (stored) {
+    return stored;
+  }
+  return systemPrefersDark() ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const isDark = theme === "dark";
+  const sun = $("themeIconSun");
+  const moon = $("themeIconMoon");
+  if (sun && moon) {
+    sun.classList.toggle("icon-hidden", isDark);
+    moon.classList.toggle("icon-hidden", !isDark);
+  }
+  if (ui.themeToggle) {
+    ui.themeToggle.title = isDark ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren";
+    ui.themeToggle.setAttribute(
+      "aria-label",
+      isDark ? "Zum Hellmodus wechseln" : "Zum Dunkelmodus wechseln"
+    );
+  }
+}
+
+function initTheme() {
+  applyTheme(effectiveTheme());
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (!getStoredTheme()) {
+      applyTheme(effectiveTheme());
+    }
+  });
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+const APP_VERSION = "1.0.0";
+
+async function showAbout() {
+  const body = [
+    `Version ${APP_VERSION}`,
+    "",
+    "Öffnen und durchsuchen von CSV/TXT, Export nach XLSX.",
+    "",
+    "Lizenz: Apache-2.0",
+    "https://github.com/fly2nbc-oss/CSV_Viewer",
+  ].join("\n");
+
+  if (tauri.core?.invoke) {
+    await tauri.core.invoke("plugin:dialog|message", {
+      message: body,
+      title: "Über CSV Viewer",
+      kind: "info",
+    });
+  } else {
+    window.alert(`CSV Viewer\n\n${body}`);
+  }
 }
 
 function displayDelimiter(delimiter) {
@@ -198,13 +285,102 @@ function updateMeta() {
   setInfo(state.filePath || "No file loaded");
 }
 
+function parseNumericSearch(raw) {
+  const s = raw.trim();
+  if (!s) {
+    return null;
+  }
+
+  const opNum = /^(>=|<=|>|<|=)\s*(-?\d+(?:[.,]\d+)?)\s*$/i;
+  let m = s.match(opNum);
+  if (m) {
+    const threshold = parseFloat(m[2].replace(",", "."));
+    if (Number.isNaN(threshold)) {
+      return null;
+    }
+    return { column: null, operator: m[1].toLowerCase(), threshold };
+  }
+
+  const colOpNum = /^(.+?)\s*(>=|<=|>|<|=)\s*(-?\d+(?:[.,]\d+)?)\s*$/i;
+  m = s.match(colOpNum);
+  if (m) {
+    const threshold = parseFloat(m[3].replace(",", "."));
+    if (Number.isNaN(threshold)) {
+      return null;
+    }
+    return { column: m[1].trim(), operator: m[2].toLowerCase(), threshold };
+  }
+
+  return null;
+}
+
+function cellToComparableNumber(cell) {
+  if (cell === null || cell === undefined || cell === "") {
+    return Number.NaN;
+  }
+  let text = String(cell).trim();
+  if (!text) {
+    return Number.NaN;
+  }
+  text = text.replace(/\s+/g, "");
+  text = text.replace(",", ".");
+  const num = parseFloat(text);
+  return Number.isFinite(num) ? num : Number.NaN;
+}
+
+function compareByOperator(num, operator, value) {
+  switch (operator) {
+    case ">":
+      return num > value;
+    case "<":
+      return num < value;
+    case ">=":
+      return num >= value;
+    case "<=":
+      return num <= value;
+    case "=":
+      return Math.abs(num - value) < 1e-9;
+    default:
+      return false;
+  }
+}
+
 function applyFilter() {
-  const query = state.searchQuery.toLowerCase();
-  if (!query) {
+  const raw = state.searchQuery.trim();
+  if (!raw) {
     state.filteredRows = state.rows;
     return;
   }
 
+  const numeric = parseNumericSearch(raw);
+  if (numeric) {
+    const columns = getColumns();
+    let colIndex = -1;
+    if (numeric.column) {
+      const key = numeric.column.toLowerCase();
+      colIndex = columns.findIndex((h) => String(h).toLowerCase().trim() === key);
+      if (colIndex === -1) {
+        state.filteredRows = [];
+        return;
+      }
+    }
+
+    const { operator, threshold } = numeric;
+    state.filteredRows = state.rows.filter((row) => {
+      const checkCell = (cell) => {
+        const num = cellToComparableNumber(cell);
+        if (Number.isNaN(num)) {
+          return false;
+        }
+        return compareByOperator(num, operator, threshold);
+      };
+
+      return colIndex !== -1 ? checkCell(row[colIndex]) : row.some(checkCell);
+    });
+    return;
+  }
+
+  const query = raw.toLowerCase();
   state.filteredRows = state.rows.filter((row) =>
     row.some((cell) => String(cell ?? "").toLowerCase().includes(query))
   );
@@ -253,6 +429,7 @@ function syncVirtualMeasurements() {
 function renderEmptyState(title, copy) {
   ui.tableWrap.innerHTML = `
     <div class="empty-state">
+      ${EMPTY_ICON_SVG}
       <p class="empty-title">${escapeHtml(title)}</p>
       <p class="empty-copy">${escapeHtml(copy)}</p>
     </div>
@@ -438,7 +615,7 @@ async function copyCurrentTable() {
 function jumpToRow() {
   const target = Number.parseInt(ui.rowInput.value, 10);
   if (!Number.isInteger(target) || target < 1 || target > visibleRows().length) {
-    setInfo(`Invalid row. Allowed: 1-${visibleRows().length}`);
+    setInfo(`Invalid row. Allowed: 1-${visibleRows().length}`, true);
     return;
   }
 
@@ -450,7 +627,7 @@ function jumpToRow() {
 
 function handleDropPath(path) {
   if (!path) {
-    setInfo("Drop did not include a file path");
+    setInfo("Drop did not include a file path", true);
     return;
   }
 
@@ -492,6 +669,10 @@ function isEditableTarget(target) {
     target?.isContentEditable === true
   );
 }
+
+initTheme();
+ui.themeToggle?.addEventListener("click", toggleTheme);
+ui.aboutBtn?.addEventListener("click", () => run(showAbout, "About error"));
 
 ui.openBtn.addEventListener("click", () => run(openCsv));
 ui.exportBtn.addEventListener("click", () => run(exportXlsx, "Export error"));
