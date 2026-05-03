@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CSV Viewer
+Comment=CSV- und TXT-Dateien anzeigen, suchen und als XLSX exportieren
+Exec=csv-viewer
+Icon=csv-viewer
+Terminal=false
+Type=Application
+Categories=Office;Viewer;
+StartupNotify=true

@@ -1,0 +1,50 @@
+# Maintainer: siehe Repository
+# Paket für Arch Linux und Manjaro (pacman/makepkg).
+# pkgrel bei Änderungen am PKGBUILD erhöhen; pkgver bei App-Release an tauri.conf.json anpassen.
+
+pkgname=csv-viewer
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Schlanker Desktop-CSV-Viewer mit Suche und XLSX-Export (Tauri)"
+arch=('x86_64')
+url="https://github.com/fly2nbc-oss/CSV_Viewer"
+license=('Apache')
+depends=(
+  'webkit2gtk-4.1'
+  'gtk3'
+  'libayatana-appindicator'
+  'cairo'
+  'gdk-pixbuf2'
+  'glib2'
+  'hicolor-icon-theme'
+  'libsoup3'
+  'gcc-libs'
+  'glibc'
+)
+makedepends=('npm' 'rust' 'cargo' 'git' 'pkgconf')
+install="${pkgname}.install"
+source=(
+  "${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz"
+  "csv-viewer.desktop"
+)
+sha256sums=('SKIP' 'd4c01dc46aec37309bf5ca075ef875695d57ecb86b42566745e82eafedb55ed9')
+
+prepare() {
+  cd "${srcdir}/CSV_Viewer-${pkgver}"
+  npm ci
+}
+
+build() {
+  cd "${srcdir}/CSV_Viewer-${pkgver}"
+  npm run tauri build -- --no-bundle
+}
+
+package() {
+  cd "${srcdir}/CSV_Viewer-${pkgver}"
+  install -Dm755 "src-tauri/target/release/csv_viewer" "${pkgdir}/usr/bin/csv-viewer"
+  install -Dm644 "${srcdir}/csv-viewer.desktop" "${pkgdir}/usr/share/applications/csv-viewer.desktop"
+  install -Dm644 "src-tauri/icons/32x32.png" "${pkgdir}/usr/share/icons/hicolor/32x32/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/64x64.png" "${pkgdir}/usr/share/icons/hicolor/64x64/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/128x128.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/csv-viewer.png"
+  install -Dm644 "src-tauri/icons/128x128@2x.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/csv-viewer.png"
+}

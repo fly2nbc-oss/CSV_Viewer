@@ -71,7 +71,9 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "CSV Viewer ${{ github.ref_name }}"
           releaseBody: |
-            Installierbare Builds für Windows (NSIS), Linux (.deb) und macOS (.dmg).
+            Installierbare Builds für Windows (NSIS), Linux (.deb), macOS (.dmg).
+
+            **Arch Linux / Manjaro:** Paket über `packaging/manjaro/` bauen (`makepkg -si`), siehe README.
 
             **Hinweis:** Die Versionsnummer in `src-tauri/tauri.conf.json` sollte mit diesem Tag übereinstimmen.
           releaseDraft: true
