@@ -75,8 +75,8 @@
           type="button"
           id="themeToggle"
           class="icon-btn"
-          title="Darstellung umschalten"
-          aria-label="Hell- oder Dunkelmodus umschalten"
+          title="Toggle theme"
+          aria-label="Switch between light and dark theme"
         >
           <span class="icon" id="themeIconSun" aria-hidden="true">
             <svg viewBox="0 0 24 24">
@@ -112,7 +112,7 @@
         <span id="delimiterInfo" class="meta-item">Delimiter: -</span>
         <span id="viewInfo" class="meta-item">Rows 0-0</span>
         <span id="sheetSelectorContainer" class="meta-item" hidden>
-          <select id="sheetSelector" class="sheet-select" aria-label="Arbeitsblatt auswählen"></select>
+          <select id="sheetSelector" class="sheet-select" aria-label="Select worksheet"></select>
         </span>
         <span id="statsBar" class="meta-stats" hidden>
           <span class="meta-item meta-stats-name" id="statsName"></span>
@@ -145,8 +145,8 @@
     <div class="modal-backdrop" data-close-modal tabindex="-1" aria-hidden="true"></div>
     <div class="modal-card" role="document">
       <header class="modal-head">
-        <h2 class="modal-title" id="aboutTitle">Über CSV Viewer</h2>
-        <button type="button" class="icon-btn modal-close-btn" data-close-modal aria-label="Schließen">
+        <h2 class="modal-title" id="aboutTitle">About CSV Viewer</h2>
+        <button type="button" class="icon-btn modal-close-btn" data-close-modal aria-label="Close">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -154,10 +154,10 @@
       </header>
       <div class="modal-body">
         <p class="modal-version">
-          Version <strong id="aboutModalVersion">1.0.0</strong>
+          Version <strong id="aboutModalVersion">1.0.1</strong>
         </p>
-        <p>Öffnen und durchsuchen von CSV/TXT, Export nach XLSX.</p>
-        <p>Lizenz: Apache-2.0</p>
+        <p>Open and browse CSV/TXT files; export to XLSX.</p>
+        <p>License: Apache-2.0</p>
         <p>
           <a href="https://github.com/fly2nbc-oss/CSV_Viewer" target="_blank" rel="noopener noreferrer"
             >github.com/fly2nbc-oss/CSV_Viewer</a>

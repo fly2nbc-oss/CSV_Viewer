@@ -3,7 +3,7 @@
 # pkgrel bei Änderungen am PKGBUILD erhöhen; pkgver bei App-Release an tauri.conf.json anpassen.
 
 pkgname=csv-viewer
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Schlanker Desktop-CSV-Viewer mit Suche und XLSX-Export (Tauri)"
 arch=('x86_64')

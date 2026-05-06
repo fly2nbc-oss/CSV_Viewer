@@ -68,7 +68,7 @@ const state = {
 
 let sheetSelectProgrammatic = false;
 
-const statsNumberFmt = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
+const statsNumberFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
 let headerStatsClickTimer = 0;
 
@@ -192,10 +192,10 @@ function applyTheme(theme) {
     moon.classList.toggle("icon-hidden", !isDark);
   }
   if (ui.themeToggle) {
-    ui.themeToggle.title = isDark ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren";
+    ui.themeToggle.title = isDark ? "Switch to light mode" : "Switch to dark mode";
     ui.themeToggle.setAttribute(
       "aria-label",
-      isDark ? "Zum Hellmodus wechseln" : "Zum Dunkelmodus wechseln"
+      isDark ? "Switch to light mode" : "Switch to dark mode"
     );
   }
 }
@@ -215,7 +215,7 @@ function toggleTheme() {
   applyTheme(next);
 }
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 
 function openAbout() {
   if (ui.aboutModalVersion) {
@@ -374,7 +374,7 @@ function renderStats() {
     return;
   }
   const colName = getColumns()[state.statsColumnIndex];
-  ui.statsName.textContent = `Spalte: ${colName}`;
+  ui.statsName.textContent = `Column: ${colName}`;
   ui.statsSum.textContent = `Sum: ${statsNumberFmt.format(stats.sum)}`;
   ui.statsMin.textContent = `Min: ${statsNumberFmt.format(stats.min)}`;
   ui.statsMax.textContent = `Max: ${statsNumberFmt.format(stats.max)}`;
@@ -597,7 +597,7 @@ function renderTable() {
         `<div class="virtual-cell virtual-head-cell${
           index === state.statsColumnIndex ? " is-stats-active" : ""
         }" data-column-index="${index}" role="columnheader" title="${escapeHtml(
-          "Einfachklick: numerische Statistiken. Doppelklick: Spaltenname in die Suche einfügen"
+          "Single-click: numeric statistics. Double-click: insert column name into search"
         )}">${escapeHtml(value)}</div>`
     )
     .join("");

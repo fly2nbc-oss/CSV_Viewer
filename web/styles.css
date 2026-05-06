@@ -1,4 +1,4 @@
-/* ── Design System v1.2 (Hell) ── */
+/* ── Design System v1.2 (light) ── */
 :root {
   color-scheme: light;
   --font-ui: "Segoe UI", Tahoma, sans-serif;
@@ -36,7 +36,7 @@
   --radius-lg: 8px;
   --radius-pill: 999px;
 
-  /* Tabelle (Hell; ergänzt zu v1.2) */
+  /* Table (light; extended in v1.2) */
   --header-bg: #e8ecf2;
   --row-hover: #ebf0f7;
 }
