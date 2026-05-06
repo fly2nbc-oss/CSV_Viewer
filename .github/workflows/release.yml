@@ -76,19 +76,19 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "CSV Viewer ${{ github.ref_name }}"
           releaseBody: |
-            **Assets (wie gewohnt einzeln herunterladen):**
+            **Assets (download individually):**
 
-            | Typ | Beispiel |
+            | Type | Example |
             |-----|----------|
-            | Roh-Binary Linux | `csv-viewer` |
-            | Roh-Binary Windows | `csv-viewer.exe` |
+            | Portable binary (Linux) | `csv-viewer` |
+            | Portable binary (Windows) | `csv-viewer.exe` |
             | Linux `.deb` | `CSV Viewer_<Version>_amd64.deb` |
             | Linux AppImage | `CSV Viewer_<Version>_amd64.AppImage` |
-            | Windows Setup (NSIS) | `CSV Viewer_<Version>_x64-setup.exe` |
+            | Windows setup (NSIS) | `CSV Viewer_<Version>_x64-setup.exe` |
             | Windows MSI (WiX) | `CSV Viewer_<Version>_x64_en-US.msi` |
             | macOS | `.dmg` |
 
-            **Hinweis:** Version in `src-tauri/tauri.conf.json` und Cargo sollen mit dem Git-Tag übereinstimmen.
+            **Note:** Versions in `src-tauri/tauri.conf.json` and Cargo should match the Git tag.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
