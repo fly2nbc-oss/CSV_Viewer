@@ -58,7 +58,7 @@ Download installers and bundles from **[Releases](https://github.com/fly2nbc-oss
 | Platform | Typical assets |
 | -------- | -------------- |
 | **Windows** | NSIS setup (`.exe`), MSI (`.msi`), portable `csv-viewer.exe` |
-| **Linux** | `.deb`, AppImage (when the build succeeds), portable `csv-viewer` |
+| **Linux** | `.deb`, AppImage, portable `csv-viewer` |
 | **macOS** | `.dmg` |
 
 Linux `.deb` example:
@@ -68,17 +68,6 @@ sudo apt install ./CSV\ Viewer_*_amd64.deb
 ```
 
 See [Tauri Linux prerequisites](https://v2.tauri.app/start/prerequisites/) for system libraries (e.g. WebKit-GTK).
-
-### Arch Linux / Manjaro
-
-There is no prebuilt `.pkg.tar.zst` in the GitHub Actions release workflow. Build locally using [`packaging/manjaro/`](packaging/manjaro/) (adjust **`pkgver`** to match the released tag, e.g. `v1.0.1`, consistent with [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json)):
-
-```bash
-cd packaging/manjaro
-makepkg -si
-```
-
-The installed command is **`csv-viewer`**.
 
 ---
 
@@ -92,7 +81,7 @@ The installed command is **`csv-viewer`**.
 
 ---
 
-## Supported platforms & formats
+## Supported formats
 
 | Category | Details |
 | -------- | ------- |
