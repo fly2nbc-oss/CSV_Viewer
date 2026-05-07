@@ -27,11 +27,15 @@
 ## Screenshots
 
 <p align="center">
-  <img src="./screenshots/2026-05-06_17h42_23.png" alt="CSV Viewer main window" width="720" />
+  <img src="./screenshots/CSV_Viewer.png" alt="CSV Viewer main window" width="720" />
 </p>
 
 <p align="center">
-  <img src="./screenshots/2026-05-06_17h43_11.png" alt="CSV Viewer - search and table" width="720" />
+  <img src="./screenshots/CSV_Viewer_Linux.png" alt="CSV Viewer on Linux" width="720" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/CSV_Viewer_dark.png" alt="CSV Viewer dark theme" width="720" />
 </p>
 
 ---
