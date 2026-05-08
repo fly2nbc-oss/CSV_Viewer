@@ -215,7 +215,7 @@ function toggleTheme() {
   applyTheme(next);
 }
 
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 
 function openAbout() {
   if (ui.aboutModalVersion) {
@@ -635,7 +635,7 @@ async function loadFileFromPath(path, sheetName = null) {
   if (isXlsx) {
     const payload = await tauri.core.invoke("read_xlsx", {
       path,
-      sheet_name: sheetName ?? null,
+      sheetName: sheetName ?? null,
     });
     Object.assign(state, {
       filePath: path,

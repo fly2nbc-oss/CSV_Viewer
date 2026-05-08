@@ -1,6 +1,6 @@
 [package]
 name = "csv_viewer"
-version = "1.0.1"
+version = "1.0.2"
 description = "Slim CSV viewer with XLSX export"
 authors = ["you"]
 edition = "2021"
