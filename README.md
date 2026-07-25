@@ -3,8 +3,8 @@
 **A fast, local desktop app to open large CSV/TXT files, search and filter, and export to Excel — built with Tauri v2.**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![GitHub release](https://img.shields.io/github/v/release/fly2nbc-oss/CSV_Viewer?label=Latest%20release)](https://github.com/fly2nbc-oss/CSV_Viewer/releases/latest)
-[![CI](https://github.com/fly2nbc-oss/CSV_Viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/fly2nbc-oss/CSV_Viewer/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/fly2nbc-oss/CSV-Viewer?label=Latest%20release)](https://github.com/fly2nbc-oss/CSV-Viewer/releases/latest)
+[![CI](https://github.com/fly2nbc-oss/CSV-Viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/fly2nbc-oss/CSV-Viewer/actions/workflows/ci.yml)
 ![Tauri](https://img.shields.io/badge/Tauri-v2-262626?logo=tauri)
 ![Rust](https://img.shields.io/badge/Rust-stable-orange?logo=rust&logoColor=white)
 ![Platforms](https://img.shields.io/badge/Platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
@@ -27,15 +27,15 @@
 ## Screenshots
 
 <p align="center">
-  <img src="./screenshots/CSV_Viewer.png" alt="CSV Viewer main window" width="720" />
+  <img src="./screenshots/CSV-Viewer.png" alt="CSV Viewer main window" width="720" />
 </p>
 
 <p align="center">
-  <img src="./screenshots/CSV_Viewer_Linux.png" alt="CSV Viewer on Linux" width="720" />
+  <img src="./screenshots/CSV-Viewer_Linux.png" alt="CSV Viewer on Linux" width="720" />
 </p>
 
 <p align="center">
-  <img src="./screenshots/CSV_Viewer_dark.png" alt="CSV Viewer dark theme" width="720" />
+  <img src="./screenshots/CSV-Viewer_dark.png" alt="CSV Viewer dark theme" width="720" />
 </p>
 
 ---
@@ -57,7 +57,7 @@
 
 ## Quick start / Installation
 
-Download installers and bundles from **[Releases](https://github.com/fly2nbc-oss/CSV_Viewer/releases)** (look for version tags `v*`).
+Download installers and bundles from **[Releases](https://github.com/fly2nbc-oss/CSV-Viewer/releases)** (look for version tags `v*`).
 
 | Platform | Typical assets |
 | -------- | -------------- |
@@ -99,8 +99,8 @@ See [Tauri Linux prerequisites](https://v2.tauri.app/start/prerequisites/) for s
 **Requirements:** Node.js (LTS recommended), **Rust (stable)**, and [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your OS.
 
 ```bash
-git clone https://github.com/fly2nbc-oss/CSV_Viewer.git
-cd CSV_Viewer
+git clone https://github.com/fly2nbc-oss/CSV-Viewer.git
+cd CSV-Viewer
 npm install
 npm run tauri dev    # development
 npm run tauri build  # production bundles
@@ -122,13 +122,13 @@ npm run tauri build -- --bundles deb
 - **`src-tauri/`** — Rust backend, Tauri config, icons (`read_csv`, `read_xlsx`, `export_xlsx`, drag-and-drop).
 - **`packaging/manjaro/`** — Local **pacman** packaging helpers.
 
-More detail: [`CSV_Viewer_Doc.md`](CSV_Viewer_Doc.md).
+More detail: [`CSV-Viewer_Doc.md`](CSV-Viewer_Doc.md).
 
 ---
 
 ## Roadmap, known issues & contributing
 
-- **Roadmap** — Driven by [Issues](https://github.com/fly2nbc-oss/CSV_Viewer/issues); suggestions welcome.
+- **Roadmap** — Driven by [Issues](https://github.com/fly2nbc-oss/CSV-Viewer/issues); suggestions welcome.
 - **Known issues** — AppImage builds can fail if the Linux AppImage toolchain is missing or misconfigured; use `--bundles deb` as a fallback.
 - **Contributing** — See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
@@ -140,4 +140,4 @@ Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE).
 
 ---
 
-**Repository:** <https://github.com/fly2nbc-oss/CSV_Viewer>
+**Repository:** <https://github.com/fly2nbc-oss/CSV-Viewer>

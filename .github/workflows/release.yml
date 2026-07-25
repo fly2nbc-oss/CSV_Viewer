@@ -99,7 +99,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp src-tauri/target/release/csv_viewer csv-viewer
+          cp src-tauri/target/release/csv-viewer csv-viewer
           chmod +x csv-viewer
           gh release upload "${{ github.ref_name }}" csv-viewer --clobber --repo "${{ github.repository }}"
 
@@ -109,5 +109,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
-          Copy-Item "src-tauri/target/release/csv_viewer.exe" -Destination "csv-viewer.exe"
+          Copy-Item "src-tauri/target/release/csv-viewer.exe" -Destination "csv-viewer.exe"
           gh release upload "${{ github.ref_name }}" "csv-viewer.exe" --clobber --repo "${{ github.repository }}"

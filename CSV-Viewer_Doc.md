@@ -15,7 +15,7 @@ Die Kernaufgabe der Anwendung ist das Oeffnen, Anzeigen, Filtern und Exportieren
 Das Repository wurde auf die aktive Tauri-Anwendung reduziert. Relevante Ordner und Dateien sind:
 
 ```text
-CSV_Viewer/
+CSV-Viewer/
 |- web/                     # Statisches Frontend
 |  |- index.html            # HTML-Grundgeruest der Anwendung
 |  |- main.js               # Gesamte Frontend-Logik

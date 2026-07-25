@@ -7,7 +7,7 @@ pkgver=1.0.2
 pkgrel=2
 pkgdesc="Schlanker Desktop-CSV-Viewer mit Suche und XLSX-Export (Tauri)"
 arch=('x86_64')
-url="https://github.com/fly2nbc-oss/CSV_Viewer"
+url="https://github.com/fly2nbc-oss/CSV-Viewer"
 license=('Apache')
 depends=(
   'webkit2gtk-4.1'
@@ -32,18 +32,18 @@ source=(
 sha256sums=('SKIP' 'd4c01dc46aec37309bf5ca075ef875695d57ecb86b42566745e82eafedb55ed9')
 
 prepare() {
-  cd "${srcdir}/CSV_Viewer-${pkgver}"
+  cd "${srcdir}/CSV-Viewer-${pkgver}"
   npm ci
 }
 
 build() {
-  cd "${srcdir}/CSV_Viewer-${pkgver}"
+  cd "${srcdir}/CSV-Viewer-${pkgver}"
   npm run tauri build -- --no-bundle
 }
 
 package() {
-  cd "${srcdir}/CSV_Viewer-${pkgver}"
-  install -Dm755 "src-tauri/target/release/csv_viewer" "${pkgdir}/usr/bin/csv-viewer"
+  cd "${srcdir}/CSV-Viewer-${pkgver}"
+  install -Dm755 "src-tauri/target/release/csv-viewer" "${pkgdir}/usr/bin/csv-viewer"
   install -Dm644 "${srcdir}/csv-viewer.desktop" "${pkgdir}/usr/share/applications/csv-viewer.desktop"
   install -Dm644 "src-tauri/icons/32x32.png" "${pkgdir}/usr/share/icons/hicolor/32x32/apps/csv-viewer.png"
   install -Dm644 "src-tauri/icons/64x64.png" "${pkgdir}/usr/share/icons/hicolor/64x64/apps/csv-viewer.png"
