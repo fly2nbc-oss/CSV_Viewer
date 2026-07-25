@@ -4,7 +4,7 @@
 
 pkgname=csv-viewer
 pkgver=1.0.2
-pkgrel=1
+pkgrel=2
 pkgdesc="Schlanker Desktop-CSV-Viewer mit Suche und XLSX-Export (Tauri)"
 arch=('x86_64')
 url="https://github.com/fly2nbc-oss/CSV_Viewer"
@@ -14,12 +14,14 @@ depends=(
   'gtk3'
   'libayatana-appindicator'
   'cairo'
+  'desktop-file-utils'
   'gdk-pixbuf2'
   'glib2'
+  'glibc'
+  'gcc-libs'
   'hicolor-icon-theme'
   'libsoup3'
-  'gcc-libs'
-  'glibc'
+  'pango'
 )
 makedepends=('npm' 'rust' 'cargo' 'git' 'pkgconf')
 install="${pkgname}.install"
